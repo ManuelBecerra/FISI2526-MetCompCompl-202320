@@ -1,0 +1,98 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+B = 0.05 #T
+f = 1000 #Hz
+omega = 3.5 #rad/seg
+d = 25 #cm
+ciclo = 1/f #seg
+R = d/2
+flujo = lambda t: np.pi*(R**2)*B*np.sin(omega*t)*np.sin(2*np.pi*f*t)
+
+
+tiempo = np.linspace(0.,ciclo,100)
+#voy a usar el ciclo como el tiempo que queremos graficar ya que despues se debería repetir la funcion
+
+#parte 2
+def Derivative(f,x,h=10**-6):
+    return (f(x+h)-f(x-h))/(2*h)
+
+def calcular_corriente(R,flujo,tiempo):
+    
+    corriente = list()
+    
+    
+    for i in range(len(tiempo)):
+        derivada = Derivative(flujo,tiempo[i])
+        I = (-1/R)*derivada
+        corriente.append(I)
+    
+    return corriente
+
+corriente = calcular_corriente(R, flujo, tiempo)
+
+
+#parte 3
+
+
+def GetNewtonMethod(f,df,xn,itmax=100,precision=1e-8):
+    
+    error = 1.
+    it = 0
+    
+    while error > precision and it < itmax:
+        
+        try:
+            
+            xn1 = xn - f(xn)/df(f,xn)
+            # Criterio de parada
+            error = np.abs(f(xn)/df(f,xn))
+            
+        except ZeroDivisionError:
+            print('Division por cero')
+            
+        xn = xn1
+        it += 1
+        
+   # print('Raiz',xn,it)
+    
+    if it == itmax:
+        return False
+    else:
+        return xn
+
+root = GetNewtonMethod(flujo,Derivative,0.00025)
+print(root)
+
+def GetAllRoots(x, tolerancia=10):
+    
+    Roots = np.array([])
+    
+    for i in x:
+        
+        root = GetNewtonMethod(flujo,Derivative,i)
+        
+        if root != False:
+            
+            croot = np.round(root, tolerancia)
+            
+            if croot not in Roots:
+                Roots = np.append(Roots,croot)
+                
+    Roots.sort()
+    
+    return Roots
+
+Roots = GetAllRoots(tiempo)
+print(Roots)
+
+
+
+
+#CHEQUEAR UNIDADES
+plt.plot(tiempo,corriente,color='b')
+#plt.scatter(tiempo, Roots, color='r')
+plt.xlabel('t (seg)')
+plt.ylabel('I (A)')
+plt.title('Corriente vs tiempo')
+plt.show()
